@@ -11,14 +11,14 @@
 <booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.enableSemihosting" value="true"/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbClientOtherCommands" value="set mem inaccessible-by-default off"/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbClientOtherOptions" value=""/>
-<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerBoardName" value="STM32F4-Discovery"/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerBoardName" value=""/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerConnectionAddress" value=""/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerDeviceName" value="STM32F407VG"/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerExecutable" value="${qemu_path}/${qemu_executable}"/>
 <intAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerGdbPortNumber" value="1234"/>
-<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerMachineName" value="STM32F4-Discovery"/>
-<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerOther" value="-d unimp,guest_errors"/>
-<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.isGdbServerVerbose" value="true"/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerMachineName" value=""/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerOther" value=""/>
+<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.isGdbServerVerbose" value="false"/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.otherInitCommands" value=""/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.otherRunCommands" value=""/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.semihosting.cmdline" value="f407-disc-blink"/>
@@ -33,7 +33,7 @@
 <booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.setPcRegister" value="false"/>
 <booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.setResume" value="false"/>
 <booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.setStopAt" value="true"/>
-<stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.stopAt" value="main"/>
+<stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.stopAt" value="_start"/>
 <stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.symbolsFileName" value=""/>
 <stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.symbolsOffset" value=""/>
 <booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.useFileForImage" value="false"/>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="ilg.gnuarmeclipse.debug.gdbjtag.qemu.launchConfigurationType">
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.PERIPHERALS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#10;&lt;peripherals/&gt;&#10;"/>
+<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.disableGraphics" value="false"/>
 <booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.doContinue" value="true"/>
 <booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.doDebugInRam" value="false"/>
 <booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.doFirstReset" value="false"/>
@@ -10,7 +11,9 @@
 <booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.enableSemihosting" value="true"/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbClientOtherCommands" value="set mem inaccessible-by-default off"/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbClientOtherOptions" value=""/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerBoardName" value=""/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerConnectionAddress" value=""/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerDeviceName" value="STM32F103RB"/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerExecutable" value="${qemu_path}/${qemu_executable}"/>
 <intAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerGdbPortNumber" value="1234"/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.gdbServerMachineName" value="STM32-H103"/>
