@@ -28,6 +28,7 @@ extern "C" void
 SysTick_Handler(void)
 {
   Timer::tick();
+  HAL_IncTick();
 }
 
 // ----------------------------------------------------------------------------

@@ -113,9 +113,9 @@ main (int argc, char* argv[])
       // configurable via semihosting.
       loops = atoi (argv[1]);
       if (loops < LOOP_COUNT)
-	{
-	  loops = LOOP_COUNT;
-	}
+        {
+          loops = LOOP_COUNT;
+        }
     }
 
   for (size_t i = 0; i < (sizeof(blinkLed) / sizeof(blinkLed[0])); ++i)
@@ -152,13 +152,13 @@ main (int argc, char* argv[])
   for (int i = 0; i < loops; i++)
     {
       for (size_t l = 0; l < (sizeof(blinkLed) / sizeof(blinkLed[0])); ++l)
-	{
-	  blinkLed[l].toggle ();
-	  if (blinkLed[l].isOn ())
-	    {
-	      break;
-	    }
-	}
+        {
+          blinkLed[l].toggle ();
+          if (blinkLed[l].isOn ())
+            {
+              break;
+            }
+        }
       timer.sleep (Timer::FREQUENCY_HZ);
 
       ++seconds;
