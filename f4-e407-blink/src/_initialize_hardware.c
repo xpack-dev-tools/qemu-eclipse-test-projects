@@ -36,7 +36,7 @@ void
 __initialize_hardware(void);
 
 void
-configure_system_clock(void);
+SystemClock_Config(void);
 
 // ----------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ void
 __initialize_hardware(void)
 {
   // Enable HSE Oscillator and activate PLL with HSE as source
-  configure_system_clock();
+  SystemClock_Config();
 
   // Call the CSMSIS system clock routine to store the clock frequency
   // in the SystemCoreClock global RAM location.
@@ -106,7 +106,7 @@ SysTick_Handler(void)
  * @retval None
  */
 void
-configure_system_clock(void)
+SystemClock_Config(void)
 {
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
   RCC_OscInitTypeDef RCC_OscInitStruct;
