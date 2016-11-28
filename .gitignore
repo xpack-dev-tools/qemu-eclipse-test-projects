@@ -5,3 +5,5 @@ Release
 f407-disc-blink/Debug-noFP
 .metadata
 RemoteSystemsTempFiles
+.vscode
+vscode.mac.command
