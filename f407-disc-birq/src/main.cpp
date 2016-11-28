@@ -211,6 +211,7 @@ EXTI0_IRQHandler(void);
 void
 EXTI0_IRQHandler(void)
 {
+  trace_printf ("EXTI\n");
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
 }
 
