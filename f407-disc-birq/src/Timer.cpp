@@ -5,11 +5,13 @@
 
 #include "Timer.h"
 #include "cortexm/ExceptionHandlers.h"
+#include "diag/Trace.h"
 
 // ----------------------------------------------------------------------------
 
 #if defined(USE_HAL_DRIVER)
-extern "C" void HAL_IncTick(void);
+extern "C" void
+HAL_IncTick (void);
 #endif
 
 // ----------------------------------------------------------------------------
@@ -19,7 +21,7 @@ volatile Timer::ticks_t Timer::ms_delayCount;
 // ----------------------------------------------------------------------------
 
 void
-Timer::sleep(ticks_t ticks)
+Timer::sleep (ticks_t ticks)
 {
   ms_delayCount = ticks;
 
@@ -31,12 +33,12 @@ Timer::sleep(ticks_t ticks)
 // ----- SysTick_Handler() ----------------------------------------------------
 
 extern "C" void
-SysTick_Handler(void)
+SysTick_Handler (void)
 {
 #if defined(USE_HAL_DRIVER)
-  HAL_IncTick();
+  HAL_IncTick ();
 #endif
-  Timer::tick();
+  Timer::tick ();
 }
 
 // ----------------------------------------------------------------------------
