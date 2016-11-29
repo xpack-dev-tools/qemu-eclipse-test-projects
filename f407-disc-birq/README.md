@@ -12,4 +12,4 @@ Click the black button; the board will reset.
 
 ## Details
 
-The button is connected to GPIOA0; the application enables EXTI0 and installs a callback that will turn on and off each button in sequence.
+The button is connected to GPIO A0; the application enables EXTI0 and installs a callback that will turn on and off each LED in sequence.
