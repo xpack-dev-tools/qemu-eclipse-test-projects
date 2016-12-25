@@ -75,7 +75,6 @@ blink_led blink_leds[2] =
 
 #define BUTTON_PORT_NUMBER 		(0)
 #define BUTTON_PIN_NUMBER 		(0)
-#define BUTTON_PIN_MASK(_N)		(1 << (_N))
 
 #define BUTTON_GPIOx(_N)           	((GPIO_TypeDef *)(GPIOA_BASE + (GPIOB_BASE-GPIOA_BASE)*(_N)))
 #define BUTTON_PIN_MASK(_N)             (1 << (_N))
@@ -167,6 +166,7 @@ main (int argc, char* argv[])
   button_gpio_init.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init (BUTTON_GPIOx(BUTTON_PORT_NUMBER), &button_gpio_init);
 
+  RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
   SYSCFG_EXTILineConfig ((uint8_t) BUTTON_PORT_NUMBER, EXTI_PinSource0);
 
   EXTI->IMR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);

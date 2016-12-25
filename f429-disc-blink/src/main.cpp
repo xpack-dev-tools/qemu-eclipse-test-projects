@@ -157,6 +157,7 @@ main (int argc, char* argv[])
   button_gpio_init.Pull = GPIO_NOPULL;
   HAL_GPIO_Init (BUTTON_GPIOx(BUTTON_PORT_NUMBER), &button_gpio_init);
 
+  RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
   SYSCFG_EXTILineConfig ((uint8_t) BUTTON_PORT_NUMBER, 0);
 
   EXTI->IMR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
