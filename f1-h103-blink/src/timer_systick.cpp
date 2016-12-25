@@ -3,17 +3,23 @@
 // Copyright (c) 2014 Liviu Ionescu.
 //
 
-#include "Timer.h"
+#include <timer_systick.h>
 #include "cortexm/ExceptionHandlers.h"
 
 // ----------------------------------------------------------------------------
 
-volatile Timer::ticks_t Timer::ms_delayCount;
+#if defined(USE_HAL_DRIVER)
+extern "C" void HAL_IncTick(void);
+#endif
+
+// ----------------------------------------------------------------------------
+
+volatile timer_systick::ticks_t timer_systick::ms_delayCount;
 
 // ----------------------------------------------------------------------------
 
 void
-Timer::sleep(ticks_t ticks)
+timer_systick::sleep (ticks_t ticks)
 {
   ms_delayCount = ticks;
 
@@ -25,9 +31,12 @@ Timer::sleep(ticks_t ticks)
 // ----- SysTick_Handler() ----------------------------------------------------
 
 extern "C" void
-SysTick_Handler(void)
+SysTick_Handler (void)
 {
-  Timer::tick();
+#if defined(USE_HAL_DRIVER)
+  HAL_IncTick();
+#endif
+  timer_systick::tick ();
 }
 
 // ----------------------------------------------------------------------------

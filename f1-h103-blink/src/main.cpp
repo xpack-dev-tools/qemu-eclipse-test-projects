@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include "diag/Trace.h"
 
-#include "Timer.h"
-#include "BlinkLed.h"
+#include "timer_systick.h"
+#include "blink_led.h"
 
 // ----------------------------------------------------------------------------
 //
@@ -51,10 +51,38 @@ namespace
   // ----- Timing definitions -------------------------------------------------
 
   // Keep the LED on for 2/3 of a second.
-  constexpr Timer::ticks_t BLINK_ON_TICKS = Timer::FREQUENCY_HZ * 2 / 3;
-  constexpr Timer::ticks_t BLINK_OFF_TICKS = Timer::FREQUENCY_HZ
+  constexpr timer_systick::ticks_t BLINK_ON_TICKS = timer_systick::FREQUENCY_HZ
+      * 2 / 3;
+  constexpr timer_systick::ticks_t BLINK_OFF_TICKS = timer_systick::FREQUENCY_HZ
       - BLINK_ON_TICKS;
 }
+
+// ----- LED definitions ------------------------------------------------------
+
+// Adjust these definitions for your own board.
+
+// Olimex STM32-H103 definitions (the GREEN led, C12, active low)
+// (SEGGER J-Link device name: STM32F103RB).
+
+// Port numbers: 0=A, 1=B, 2=C, 3=D, 4=E, 5=F, 6=G, ...
+#define BLINK_PORT_NUMBER               (2)
+#define BLINK_PIN_NUMBER                (12)
+#define BLINK_ACTIVE_LOW                (1)
+
+blink_led blink_leds[1] =
+  {
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER, BLINK_ACTIVE_LOW }
+  /**/
+  };
+
+#define BUTTON_PORT_NUMBER 		(0)
+#define BUTTON_PIN_NUMBER 		(0)
+
+#define BUTTON_GPIOx(_N)           	((GPIO_TypeDef *)(GPIOA_BASE + (GPIOB_BASE-GPIOA_BASE)*(_N)))
+#define BUTTON_PIN_MASK(_N)             (1 << (_N))
+#define BUTTON_RCC_MASKx(_N)         	(RCC_APB2Periph_GPIOA << (_N))
+
+int button_pressed = 0;
 
 // ----- main() ---------------------------------------------------------------
 
@@ -66,32 +94,30 @@ namespace
 #pragma GCC diagnostic ignored "-Wreturn-type"
 
 int
-main(int argc, char* argv[])
+main (int argc, char* argv[])
 {
   // Show the program parameters (passed via semihosting).
   // Output is via the semihosting output channel.
-  trace_dump_args(argc, argv);
+  trace_dump_args (argc, argv);
 
   // Send a greeting to the trace device (skipped on Release).
-  trace_puts("Hello ARM World!");
+  trace_puts ("Hello ARM World!");
 
   // Send a message to the standard output.
-  puts("Standard output message.");
+  puts ("Standard output message.");
 
   // Send a message to the standard error.
-  fprintf(stderr, "Standard error message.\n");
+  fprintf (stderr, "Standard error message.\n");
 
   // At this stage the system clock should have already been configured
   // at high speed.
-  trace_printf("System clock: %u Hz.\n", SystemCoreClock);
+  trace_printf ("System clock: %u Hz.\n", SystemCoreClock);
 
-  Timer timer;
-  timer.start();
-
-  BlinkLed blinkLed;
+  timer_systick timer;
+  timer.start ();
 
   // Perform all necessary initialisations for the LED.
-  blinkLed.powerUp();
+  blink_leds[0].power_up ();
 
   uint32_t seconds = 0;
 
@@ -104,23 +130,108 @@ main(int argc, char* argv[])
       loops = atoi (argv[1]);
     }
 
-  // Short loop.
-  for (int i = 0; i < loops; i++)
-    {
-      blinkLed.turnOn();
-      timer.sleep(BLINK_ON_TICKS);
+  // --------------------------------------------------------------------------
 
-      blinkLed.turnOff();
-      timer.sleep(BLINK_OFF_TICKS);
+  RCC_APB2PeriphClockCmd (BUTTON_RCC_MASKx(BUTTON_PORT_NUMBER), ENABLE);
+
+  GPIO_InitTypeDef GPIO_InitStructure;
+
+  // Configure pin in input mode.
+  GPIO_InitStructure.GPIO_Pin = BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+  GPIO_Init (BUTTON_GPIOx(BUTTON_PORT_NUMBER), &GPIO_InitStructure);
+
+  RCC_APB2PeriphClockCmd (RCC_APB2Periph_AFIO, ENABLE);
+
+  GPIO_EXTILineConfig ((uint8_t) BUTTON_PORT_NUMBER, (uint8_t)BUTTON_PIN_NUMBER);
+
+  EXTI->IMR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+  EXTI->RTSR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+  EXTI->FTSR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+
+  NVIC_EnableIRQ (EXTI0_IRQn);
+
+  // --------------------------------------------------------------------------
+
+  // Short loop.
+  for (int i = 0; (i < loops) && (!button_pressed); i++)
+    {
+      blink_leds[0].turn_on ();
+      timer.sleep (BLINK_ON_TICKS);
+
+      if (button_pressed)
+	break;
+
+      blink_leds[0].turn_off ();
+      timer.sleep (BLINK_OFF_TICKS);
+
+      if (button_pressed)
+	break;
 
       ++seconds;
 
       // Count seconds on the trace device.
-      trace_printf("Second %u\n", seconds);
+      trace_printf ("Second %u\n", seconds);
     }
+
+  do
+    {
+      timer.sleep (timer_systick::FREQUENCY_HZ);
+      ++seconds;
+      trace_printf ("Second %u\n", seconds);
+    }
+  while (button_pressed);
+
   return 0;
 }
 
 #pragma GCC diagnostic pop
+
+// ----------------------------------------------------------------------------
+
+int led_no = 0;
+int old_val = 0;
+
+static void
+GPIO_EXTI_Callback (uint16_t mask)
+{
+  int val = ((BUTTON_GPIOx(BUTTON_PORT_NUMBER)->IDR & mask) != 0);
+
+  if (val != old_val)
+    {
+      if (button_pressed == 0)
+	{
+	  button_pressed = 1;
+
+	  blink_leds[led_no].turn_off ();
+	}
+
+      if (val)
+	{
+	  blink_leds[led_no].turn_on ();
+	}
+      else
+	{
+	  blink_leds[led_no].turn_off ();
+	}
+    }
+  old_val = val;
+}
+
+extern "C" void
+EXTI0_IRQHandler (void);
+
+void
+EXTI0_IRQHandler (void)
+{
+  trace_printf ("EXTI\n");
+  if ((EXTI->PR & BUTTON_PIN_MASK(BUTTON_PIN_NUMBER)) != 0)
+    {
+      EXTI->PR = BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+
+      GPIO_EXTI_Callback (BUTTON_PIN_MASK(BUTTON_PIN_NUMBER));
+    }
+}
 
 // ----------------------------------------------------------------------------
