@@ -6,33 +6,42 @@
 #ifndef BLINKLED_H_
 #define BLINKLED_H_
 
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal.h"
+#include "stm32f10x.h"
 
 #define BLINK_GPIOx(_N)                 ((GPIO_TypeDef *)(GPIOA_BASE + (GPIOB_BASE-GPIOA_BASE)*(_N)))
 #define BLINK_PIN_MASK(_N)              (1 << (_N))
-#define BLINK_RCC_MASKx(_N)             (RCC_AHB1ENR_GPIOAEN << (_N))
+#define BLINK_RCC_MASKx(_N)             (RCC_APB2Periph_GPIOA << (_N))
 
 // ----------------------------------------------------------------------------
 
-class BlinkLed
+class blink_led
 {
 public:
-  BlinkLed (int port, int bit, bool active_low);
+
+  blink_led (unsigned int port, unsigned int bit, bool active_low);
 
   void
-  powerUp ();
+  power_up ();
 
   void
-  turnOn ();
+  turn_on ();
 
   void
-  turnOff ();
+  turn_off ();
+
+  void
+  toggle ();
+
+  bool
+  is_on ();
 
 private:
-  int port_number;
-  int bit_number;
-  bool is_active_low;
+  GPIO_TypeDef *portAddress;
+  unsigned int portNumber;
+  unsigned int bitNumber;
+  unsigned int bitMask;
+  bool isActiveLow;
+
 };
 
 // ----------------------------------------------------------------------------

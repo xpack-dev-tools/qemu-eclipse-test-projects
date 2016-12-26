@@ -14,24 +14,34 @@
 
 // ----------------------------------------------------------------------------
 
-class BlinkLed
+class blink_led
 {
 public:
-  BlinkLed (int port, int bit, bool active_low);
+
+  blink_led (unsigned int port, unsigned int bit, bool active_low);
 
   void
-  powerUp ();
+  power_up ();
 
   void
-  turnOn ();
+  turn_on ();
 
   void
-  turnOff ();
+  turn_off ();
+
+  void
+  toggle ();
+
+  bool
+  is_on ();
 
 private:
-  int port_number;
-  int bit_number;
-  bool is_active_low;
+  GPIO_TypeDef *portAddress;
+  unsigned int portNumber;
+  unsigned int bitNumber;
+  unsigned int bitMask;
+  bool isActiveLow;
+
 };
 
 // ----------------------------------------------------------------------------

@@ -75,6 +75,8 @@ blink_led blink_leds[1] =
   /**/
   };
 
+// ----- Button definitions ---------------------------------------------------
+
 #define BUTTON_PORT_NUMBER 		(0)
 #define BUTTON_PIN_NUMBER 		(0)
 
@@ -116,10 +118,6 @@ main (int argc, char* argv[])
   timer_systick timer;
   timer.start ();
 
-  // Perform all necessary initialisations for the LED.
-  blink_leds[0].power_up ();
-
-  uint32_t seconds = 0;
 
 #define LOOP_COUNT (5)
   int loops = LOOP_COUNT;
@@ -153,6 +151,11 @@ main (int argc, char* argv[])
   NVIC_EnableIRQ (EXTI0_IRQn);
 
   // --------------------------------------------------------------------------
+
+  uint32_t seconds = 0;
+
+  // Perform all necessary initialisations for the LED.
+  blink_leds[0].power_up ();
 
   // Short loop.
   for (int i = 0; (i < loops) && (!button_pressed); i++)

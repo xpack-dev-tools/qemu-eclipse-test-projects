@@ -14,7 +14,7 @@
 
 // ----------------------------------------------------------------------------
 //
-// Semihosting STM32F4 led blink sample (trace via DEBUG).
+// Semihosting STM32F1 led blink sample (trace via DEBUG).
 //
 // In debug configurations, demonstrate how to print a greeting message
 // on the trace device. In release configurations the message is
@@ -32,7 +32,17 @@
 // By default the trace messages are forwarded to the DEBUG output,
 // but can be rerouted to any device or completely suppressed, by
 // changing the definitions required in system/src/diag/trace_impl.c
-// (currently OS_USE_TRACE_ITM, OS_USE_TRACE_SEMIHOSTING_DEBUG/_STDOUT).
+// (currently OS_USE_TRACE_SEMIHOSTING_DEBUG/_STDOUT).
+//
+// The external clock frequency is specified as a preprocessor definition
+// passed to the compiler via a command line option (see the 'C/C++ General' ->
+// 'Paths and Symbols' -> the 'Symbols' tab, if you want to change it).
+// The value selected during project creation was HSE_VALUE=8000000.
+//
+// Note: The default clock settings take the user defined HSE_VALUE and try
+// to reach the maximum possible system clock. For the default 8 MHz input
+// the result is guaranteed, but for other values it might not be possible,
+// so please adjust the PLL settings in system/src/cmsis/system_stm32f10x.c
 //
 
 // Definitions visible only within this translation unit.
@@ -49,29 +59,25 @@ namespace
 
 // ----- LED definitions ------------------------------------------------------
 
-// Olimex STM32-E407 definitions
+// Port numbers: 0=A, 1=B, 2=C, 3=D, 4=E, 5=F, 6=G, ...
+#define BLINK_PORT_NUMBER               (0)
+#define BLINK_PIN_NUMBER                (5)
+#define BLINK_ACTIVE_LOW                (0)
 
-#define BLINK_PORT_NUMBER               (2)
-#define BLINK_PIN_NUMBER                (13)
-#define BLINK_ACTIVE_LOW                (1)
-
-blink_led blink_leds[] =
+blink_led blink_leds[1] =
   {
-    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER, BLINK_ACTIVE_LOW }
   /**/
   };
 
 // ----- Button definitions ---------------------------------------------------
 
-#define BUTTON_PORT_NUMBER 		(0)
-#define BUTTON_PIN_NUMBER 		(0)
+#define BUTTON_PORT_NUMBER 		(2)
+#define BUTTON_PIN_NUMBER 		(9)
 
 #define BUTTON_GPIOx(_N)           	((GPIO_TypeDef *)(GPIOA_BASE + (GPIOB_BASE-GPIOA_BASE)*(_N)))
 #define BUTTON_PIN_MASK(_N)             (1 << (_N))
-#define BUTTON_RCC_MASKx(_N)         	(RCC_AHB1ENR_GPIOAEN << (_N))
-
-void
-SYSCFG_EXTILineConfig (uint8_t EXTI_PortSourceGPIOx, uint8_t EXTI_PinSourcex);
+#define BUTTON_RCC_MASKx(_N)         	(RCC_APB2Periph_GPIOA << (_N))
 
 int button_pressed = 0;
 
@@ -107,48 +113,43 @@ main (int argc, char* argv[])
   timer_systick timer;
   timer.start ();
 
-
-#define LOOP_COUNT (1 << (sizeof(blink_leds) / sizeof(blink_leds[0])))
-
+#define LOOP_COUNT (5)
   int loops = LOOP_COUNT;
   if (argc > 1)
     {
       // If defined, get the number of loops from the command line,
       // configurable via semihosting.
       loops = atoi (argv[1]);
-      if (loops < LOOP_COUNT)
-	{
-	  loops = LOOP_COUNT;
-	}
     }
 
   // --------------------------------------------------------------------------
 
-  RCC->AHB1ENR |= BUTTON_RCC_MASKx(BUTTON_PORT_NUMBER);
+  RCC_APB2PeriphClockCmd (BUTTON_RCC_MASKx(BUTTON_PORT_NUMBER), ENABLE);
 
-  GPIO_InitTypeDef button_gpio_init;
+  GPIO_InitTypeDef GPIO_InitStructure;
 
-  // Configure pin in input mode
-  button_gpio_init.Pin = BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
-  button_gpio_init.Mode = GPIO_MODE_IT_RISING_FALLING;
-  button_gpio_init.Speed = GPIO_SPEED_LOW;
-  button_gpio_init.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init (BUTTON_GPIOx(BUTTON_PORT_NUMBER), &button_gpio_init);
+  // Configure pin in input mode.
+  GPIO_InitStructure.GPIO_Pin = BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+  GPIO_Init (BUTTON_GPIOx(BUTTON_PORT_NUMBER), &GPIO_InitStructure);
 
-  RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-  SYSCFG_EXTILineConfig ((uint8_t) BUTTON_PORT_NUMBER, 0);
+  RCC_APB2PeriphClockCmd (RCC_APB2Periph_AFIO, ENABLE);
+
+  GPIO_EXTILineConfig ((uint8_t) BUTTON_PORT_NUMBER,
+		       (uint8_t) BUTTON_PIN_NUMBER);
 
   EXTI->IMR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
   EXTI->RTSR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
   EXTI->FTSR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
 
-  NVIC_EnableIRQ (EXTI0_IRQn);
+  NVIC_EnableIRQ (EXTI9_5_IRQn);
 
   // --------------------------------------------------------------------------
 
   uint32_t seconds = 0;
 
-  // Perform all necessary initialisations for the LEDs.
+  // Perform all necessary initialisations for the LED.
   blink_leds[0].power_up ();
 
   // Short loop.
@@ -187,22 +188,11 @@ main (int argc, char* argv[])
 
 // ----------------------------------------------------------------------------
 
-void
-SYSCFG_EXTILineConfig (uint8_t EXTI_PortSourceGPIOx, uint8_t EXTI_PinSourcex)
-{
-  uint32_t tmp = 0x00;
-
-  tmp = ((uint32_t) 0x0F) << (0x04 * (EXTI_PinSourcex & (uint8_t) 0x03));
-  SYSCFG->EXTICR[EXTI_PinSourcex >> 0x02] &= ~tmp;
-  SYSCFG->EXTICR[EXTI_PinSourcex >> 0x02] |= (((uint32_t) EXTI_PortSourceGPIOx)
-      << (0x04 * (EXTI_PinSourcex & (uint8_t) 0x03)));
-}
-
 int led_no = 0;
 int old_val = 0;
 
-void
-HAL_GPIO_EXTI_Callback (uint16_t mask)
+static void
+GPIO_EXTI_Callback (uint16_t mask)
 {
   int val = ((BUTTON_GPIOx(BUTTON_PORT_NUMBER)->IDR & mask) != 0);
 
@@ -212,11 +202,7 @@ HAL_GPIO_EXTI_Callback (uint16_t mask)
 	{
 	  button_pressed = 1;
 
-	  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0]));
-	      ++i)
-	    {
-	      blink_leds[i].turn_off ();
-	    }
+	  blink_leds[led_no].turn_off ();
 	}
 
       if (val)
@@ -226,23 +212,24 @@ HAL_GPIO_EXTI_Callback (uint16_t mask)
       else
 	{
 	  blink_leds[led_no].turn_off ();
-#if 1
-	  led_no = (led_no + 1) % (sizeof(blink_leds) / sizeof(blink_leds[0]));
-	  // trace_printf ("Led %d\n", led_no);
-#endif
 	}
     }
   old_val = val;
 }
 
 extern "C" void
-EXTI0_IRQHandler (void);
+EXTI9_5_IRQHandler (void);
 
 void
-EXTI0_IRQHandler (void)
+EXTI9_5_IRQHandler (void)
 {
   trace_printf ("EXTI\n");
-  HAL_GPIO_EXTI_IRQHandler (BUTTON_PIN_MASK(BUTTON_PIN_NUMBER));
+  if ((EXTI->PR & BUTTON_PIN_MASK(BUTTON_PIN_NUMBER)) != 0)
+    {
+      EXTI->PR = BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+
+      GPIO_EXTI_Callback (BUTTON_PIN_MASK(BUTTON_PIN_NUMBER));
+    }
 }
 
 // ----------------------------------------------------------------------------

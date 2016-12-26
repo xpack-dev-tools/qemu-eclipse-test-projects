@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include "diag/Trace.h"
 
-#include "Timer.h"
-#include "BlinkLed.h"
+#include "timer_systick.h"
+#include "blink_led.h"
 
 // ----------------------------------------------------------------------------
 //
@@ -41,8 +41,9 @@ namespace
   // ----- Timing definitions -------------------------------------------------
 
   // Keep the LED on for 2/3 of a second.
-  constexpr Timer::ticks_t BLINK_ON_TICKS = Timer::FREQUENCY_HZ * 3 / 4;
-  constexpr Timer::ticks_t BLINK_OFF_TICKS = Timer::FREQUENCY_HZ
+  constexpr timer_systick::ticks_t BLINK_ON_TICKS = timer_systick::FREQUENCY_HZ
+      * 3 / 4;
+  constexpr timer_systick::ticks_t BLINK_OFF_TICKS = timer_systick::FREQUENCY_HZ
       - BLINK_ON_TICKS;
 }
 
@@ -51,7 +52,35 @@ namespace
 #define BLINK_PORT_NUMBER1              (1)
 #define BLINK_PORT_NUMBER4              (2)
 #define BLINK_PIN_NUMBER          	(6)
-#define BLINK_ACTIVE_LOW                (false)
+#define BLINK_ACTIVE_LOW                (0)
+
+blink_led blink_leds[8] =
+  {
+    { BLINK_PORT_NUMBER1, BLINK_PIN_NUMBER, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER1, BLINK_PIN_NUMBER + 1, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER1, BLINK_PIN_NUMBER + 2, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER1, BLINK_PIN_NUMBER + 3, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER4, BLINK_PIN_NUMBER, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER4, BLINK_PIN_NUMBER + 1, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER4, BLINK_PIN_NUMBER + 2, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER4, BLINK_PIN_NUMBER + 3, BLINK_ACTIVE_LOW },
+  /**/
+  };
+
+// ----- Button definitions ---------------------------------------------------
+
+// PC14, 1 when pushed.
+#define BUTTON_PORT_NUMBER 		(2)
+#define BUTTON_PIN_NUMBER 		(14)
+
+#define BUTTON_GPIOx(_N)           	((GPIO_TypeDef *)(GPIOA_BASE + (GPIOB_BASE-GPIOA_BASE)*(_N)))
+#define BUTTON_PIN_MASK(_N)             (1 << (_N))
+#define BUTTON_RCC_MASKx(_N)         	(RCC_AHB1ENR_GPIOAEN << (_N))
+
+void
+SYSCFG_EXTILineConfig (uint8_t EXTI_PortSourceGPIOx, uint8_t EXTI_PinSourcex);
+
+int button_pressed = 0;
 
 // ----- main() ---------------------------------------------------------------
 
@@ -82,32 +111,8 @@ main (int argc, char* argv[])
   // at high speed.
   trace_printf ("System clock: %u Hz\n", SystemCoreClock);
 
-  Timer timer;
+  timer_systick timer;
   timer.start ();
-
-  BlinkLed blinkLed[8] =
-    {
-      { BLINK_PORT_NUMBER1, BLINK_PIN_NUMBER, BLINK_ACTIVE_LOW },
-      { BLINK_PORT_NUMBER1, BLINK_PIN_NUMBER + 1, BLINK_ACTIVE_LOW },
-      { BLINK_PORT_NUMBER1, BLINK_PIN_NUMBER + 2, BLINK_ACTIVE_LOW },
-      { BLINK_PORT_NUMBER1, BLINK_PIN_NUMBER + 3, BLINK_ACTIVE_LOW },
-      { BLINK_PORT_NUMBER4, BLINK_PIN_NUMBER, BLINK_ACTIVE_LOW },
-      { BLINK_PORT_NUMBER4, BLINK_PIN_NUMBER + 1, BLINK_ACTIVE_LOW },
-      { BLINK_PORT_NUMBER4, BLINK_PIN_NUMBER + 2, BLINK_ACTIVE_LOW },
-      { BLINK_PORT_NUMBER4, BLINK_PIN_NUMBER + 3, BLINK_ACTIVE_LOW }, };
-
-  // Perform all necessary initialisations for the LED.
-  blinkLed[0].powerUp ();
-  blinkLed[1].powerUp ();
-  blinkLed[2].powerUp ();
-  blinkLed[3].powerUp ();
-  blinkLed[4].powerUp ();
-  blinkLed[5].powerUp ();
-  blinkLed[6].powerUp ();
-  blinkLed[7].powerUp ();
-
-
-  uint32_t seconds = 0;
 
 #define LOOP_COUNT (5)
   int loops = LOOP_COUNT;
@@ -118,26 +123,175 @@ main (int argc, char* argv[])
       loops = atoi (argv[1]);
     }
 
-  // Short loop.
-  int l = 0;
-  for (int i = 0; i < loops; i++)
-    {
-      blinkLed[l].turnOn ();
-      timer.sleep (i == 0 ? Timer::FREQUENCY_HZ : BLINK_ON_TICKS);
+  // --------------------------------------------------------------------------
 
-      blinkLed[l].turnOff ();
+  RCC->AHB1ENR |= BUTTON_RCC_MASKx(BUTTON_PORT_NUMBER);
+
+  GPIO_InitTypeDef button_gpio_init;
+
+  // Configure pin in input mode
+  button_gpio_init.Pin = BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+  button_gpio_init.Mode = GPIO_MODE_IT_RISING_FALLING;
+  button_gpio_init.Speed = GPIO_SPEED_LOW;
+  button_gpio_init.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init (BUTTON_GPIOx(BUTTON_PORT_NUMBER), &button_gpio_init);
+
+  RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+  SYSCFG_EXTILineConfig ((uint8_t) BUTTON_PORT_NUMBER, 0);
+
+  EXTI->IMR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+  EXTI->RTSR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+  EXTI->FTSR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
+
+  NVIC_EnableIRQ (EXTI15_10_IRQn);
+
+  // --------------------------------------------------------------------------
+
+  uint32_t seconds = 0;
+
+  // Perform all necessary initialisations for the LEDs.
+  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0])); ++i)
+    {
+      blink_leds[i].power_up ();
+    }
+
+  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0])); ++i)
+    {
+      blink_leds[i].turn_on ();
+    }
+
+  timer.sleep (BLINK_ON_TICKS);
+
+  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0])); ++i)
+    {
+      blink_leds[i].turn_off ();
+    }
+
+  timer.sleep (BLINK_OFF_TICKS);
+
+  ++seconds;
+  trace_printf ("Second %u\n", seconds);
+
+  // Blink individual leds.
+  for (size_t i = 0;
+      (i < (sizeof(blink_leds) / sizeof(blink_leds[0]))) && (!button_pressed);
+      ++i)
+    {
+      blink_leds[i].turn_on ();
+      timer.sleep (BLINK_ON_TICKS);
+
+      if (button_pressed)
+	break;
+
+      blink_leds[i].turn_off ();
       timer.sleep (BLINK_OFF_TICKS);
 
+      if (button_pressed)
+	break;
+
       ++seconds;
-
-      // Count seconds on the trace device.
       trace_printf ("Second %u\n", seconds);
-
-      l = (l + 1) % (sizeof(blinkLed)/sizeof(blinkLed[0]));
     }
+
+  // Blink binary.
+  for (int i = 0; (i < loops) && (!button_pressed); i++)
+    {
+      for (size_t l = 0; l < (sizeof(blink_leds) / sizeof(blink_leds[0])); ++l)
+	{
+	  blink_leds[l].toggle ();
+	  if (blink_leds[l].is_on ())
+	    {
+	      break;
+	    }
+	}
+
+      if (button_pressed)
+	break;
+
+      timer.sleep (timer_systick::FREQUENCY_HZ);
+
+      ++seconds;
+      trace_printf ("Second %u\n", seconds);
+    }
+
+  for (size_t i = 0;
+      (i < (sizeof(blink_leds) / sizeof(blink_leds[0]))) && (!button_pressed);
+      ++i)
+    {
+      blink_leds[i].turn_on ();
+    }
+
+  do
+    {
+      timer.sleep (timer_systick::FREQUENCY_HZ);
+      ++seconds;
+      trace_printf ("Second %u\n", seconds);
+    }
+  while (button_pressed);
+
   return 0;
 }
 
 #pragma GCC diagnostic pop
+
+// ----------------------------------------------------------------------------
+
+void
+SYSCFG_EXTILineConfig (uint8_t EXTI_PortSourceGPIOx, uint8_t EXTI_PinSourcex)
+{
+  uint32_t tmp = 0x00;
+
+  tmp = ((uint32_t) 0x0F) << (0x04 * (EXTI_PinSourcex & (uint8_t) 0x03));
+  SYSCFG->EXTICR[EXTI_PinSourcex >> 0x02] &= ~tmp;
+  SYSCFG->EXTICR[EXTI_PinSourcex >> 0x02] |= (((uint32_t) EXTI_PortSourceGPIOx)
+      << (0x04 * (EXTI_PinSourcex & (uint8_t) 0x03)));
+}
+
+int led_no = 0;
+int old_val = 0;
+
+void
+HAL_GPIO_EXTI_Callback (uint16_t mask)
+{
+  int val = ((BUTTON_GPIOx(BUTTON_PORT_NUMBER)->IDR & mask) != 0);
+
+  if (val != old_val)
+    {
+      if (button_pressed == 0)
+	{
+	  button_pressed = 1;
+
+	  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0]));
+	      ++i)
+	    {
+	      blink_leds[i].turn_off ();
+	    }
+	}
+
+      if (val)
+	{
+	  blink_leds[led_no].turn_on ();
+	}
+      else
+	{
+	  blink_leds[led_no].turn_off ();
+#if 1
+	  led_no = (led_no + 1) % (sizeof(blink_leds) / sizeof(blink_leds[0]));
+	  // trace_printf ("Led %d\n", led_no);
+#endif
+	}
+    }
+  old_val = val;
+}
+
+extern "C" void
+EXTI15_10_IRQHandler (void);
+
+void
+EXTI15_10_IRQHandler (void)
+{
+  trace_printf ("EXTI %04X\n", EXTI->PR);
+  HAL_GPIO_EXTI_IRQHandler (BUTTON_PIN_MASK(BUTTON_PIN_NUMBER));
+}
 
 // ----------------------------------------------------------------------------

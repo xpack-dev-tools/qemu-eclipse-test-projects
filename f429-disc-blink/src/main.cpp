@@ -57,7 +57,9 @@ namespace
 blink_led blink_leds[2] =
   {
     { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER_GREEN, BLINK_ACTIVE_LOW },
-    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER_RED, BLINK_ACTIVE_LOW }, };
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER_RED, BLINK_ACTIVE_LOW },
+  /**/
+  };
 
 // ----- Button definitions ---------------------------------------------------
 
@@ -105,13 +107,6 @@ main (int argc, char* argv[])
   timer_systick timer;
   timer.start ();
 
-  // Perform all necessary initialisations for the LEDs.
-  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0])); ++i)
-    {
-      blink_leds[i].power_up ();
-    }
-
-  uint32_t seconds = 0;
 
 #define LOOP_COUNT (1 << (sizeof(blink_leds) / sizeof(blink_leds[0])))
 
@@ -126,23 +121,6 @@ main (int argc, char* argv[])
 	  loops = LOOP_COUNT;
 	}
     }
-
-  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0])); ++i)
-    {
-      blink_leds[i].turn_on ();
-    }
-
-  timer.sleep (BLINK_ON_TICKS);
-
-  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0])); ++i)
-    {
-      blink_leds[i].turn_off ();
-    }
-
-  timer.sleep (BLINK_OFF_TICKS);
-
-  ++seconds;
-  trace_printf ("Second %u\n", seconds);
 
   // --------------------------------------------------------------------------
 
@@ -167,6 +145,31 @@ main (int argc, char* argv[])
   NVIC_EnableIRQ (EXTI0_IRQn);
 
   // --------------------------------------------------------------------------
+
+  uint32_t seconds = 0;
+
+  // Perform all necessary initialisations for the LEDs.
+  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0])); ++i)
+    {
+      blink_leds[i].power_up ();
+    }
+
+  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0])); ++i)
+    {
+      blink_leds[i].turn_on ();
+    }
+
+  timer.sleep (BLINK_ON_TICKS);
+
+  for (size_t i = 0; i < (sizeof(blink_leds) / sizeof(blink_leds[0])); ++i)
+    {
+      blink_leds[i].turn_off ();
+    }
+
+  timer.sleep (BLINK_OFF_TICKS);
+
+  ++seconds;
+  trace_printf ("Second %u\n", seconds);
 
   // Blink individual leds.
   for (size_t i = 0;

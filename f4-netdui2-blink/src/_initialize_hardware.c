@@ -33,10 +33,10 @@
 // Forward declarations.
 
 void
-__initialize_hardware(void);
+__initialize_hardware (void);
 
 void
-SystemClock_Config(void);
+SystemClock_Config (void);
 
 // ----------------------------------------------------------------------------
 
@@ -50,18 +50,18 @@ SystemClock_Config(void);
 // priority is Privileged, and the Stack is set to Main.
 
 void
-__initialize_hardware(void)
+__initialize_hardware (void)
 {
   // Enable HSE Oscillator and activate PLL with HSE as source
-  SystemClock_Config();
+  SystemClock_Config ();
 
   // Call the CSMSIS system clock routine to store the clock frequency
   // in the SystemCoreClock global RAM location.
-  SystemCoreClockUpdate();
+  SystemCoreClockUpdate ();
 
   // Initialise the HAL Library; it must be the first
   // instruction to be executed in the main program.
-  HAL_Init();
+  HAL_Init ();
 
   // Warning: The HAL always initialises the system timer.
   // For this to work, the default SysTick_Handler must not hang
@@ -69,7 +69,7 @@ __initialize_hardware(void)
 
   // Unless explicitly enabled by the application, we prefer
   // to keep the timer interrupts off.
-  HAL_SuspendTick();
+  HAL_SuspendTick ();
 }
 
 #if 0
@@ -77,9 +77,9 @@ __initialize_hardware(void)
 // This is a sample SysTick handler, use it if you need HAL timings.
 void __attribute__ ((section(".after_vectors")))
 SysTick_Handler(void)
-{
-	HAL_IncTick();
-}
+  {
+    HAL_IncTick();
+  }
 
 #endif
 
@@ -106,13 +106,14 @@ SysTick_Handler(void)
  * @retval None
  */
 void
-SystemClock_Config(void)
+SystemClock_Config (void)
 {
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
   RCC_OscInitTypeDef RCC_OscInitStruct;
 
   // Enable Power Control clock
-  __PWR_CLK_ENABLE();
+  __PWR_CLK_ENABLE()
+  ;
 
   // The voltage scaling allows optimizing the power consumption when the
   // device is clocked below the maximum system frequency, to update the
@@ -128,11 +129,11 @@ SystemClock_Config(void)
 
   // This assumes the HSE_VALUE is a multiple of 1MHz. If this is not
   // your case, you have to recompute these PLL constants.
-  RCC_OscInitStruct.PLL.PLLM = (HSE_VALUE/1000000u);
+  RCC_OscInitStruct.PLL.PLLM = (HSE_VALUE / 1000000u);
   RCC_OscInitStruct.PLL.PLLN = 336;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 7;
-  HAL_RCC_OscConfig(&RCC_OscInitStruct);
+  HAL_RCC_OscConfig (&RCC_OscInitStruct);
 
   // Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
   // clocks dividers
@@ -142,7 +143,7 @@ SystemClock_Config(void)
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-  HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
+  HAL_RCC_ClockConfig (&RCC_ClkInitStruct, FLASH_LATENCY_5);
 }
 
 // ----------------------------------------------------------------------------
