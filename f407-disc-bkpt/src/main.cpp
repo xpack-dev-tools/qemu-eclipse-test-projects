@@ -10,7 +10,7 @@
 #include "diag/Trace.h"
 #include "assert.h"
 
-#include "Timer.h"
+#include "timer_systick.h"
 #include "BlinkLed.h"
 
 // ----- main() ---------------------------------------------------------------
