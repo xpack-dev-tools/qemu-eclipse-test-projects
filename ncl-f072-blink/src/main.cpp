@@ -14,7 +14,7 @@
 
 // ----------------------------------------------------------------------------
 //
-// Semihosting STM32F1 led blink sample (trace via DEBUG).
+// Semihosting STM32F072 led blink sample (trace via DEBUG).
 //
 // In debug configurations, demonstrate how to print a greeting message
 // on the trace device. In release configurations the message is
@@ -61,7 +61,7 @@ namespace
 
 // Adjust these definitions for your own board.
 
-// Nucleo-f103 definitions (the GREEN led, PA5, active high)
+// Nucleo-f072 definitions (the GREEN led, PA5, active high)
 
 // Port numbers: 0=A, 1=B, 2=C, 3=D, 4=E, 5=F, 6=G, ...
 #define BLINK_PORT_NUMBER               (0)
