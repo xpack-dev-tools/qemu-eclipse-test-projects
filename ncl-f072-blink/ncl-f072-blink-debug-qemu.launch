@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="ilg.gnuarmeclipse.debug.gdbjtag.qemu.launchConfigurationType">
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.PERIPHERALS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#13;&#10;&lt;peripherals/&gt;&#13;&#10;"/>
 <booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.disableGraphics" value="false"/>
 <booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.doContinue" value="true"/>
 <booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.qemu.doDebugInRam" value="false"/>

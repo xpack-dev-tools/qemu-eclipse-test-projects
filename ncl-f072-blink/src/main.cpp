@@ -144,13 +144,13 @@ main (int argc, char* argv[])
   GPIO_Init (BUTTON_GPIOx(BUTTON_PORT_NUMBER), &button_gpio_init);
 
   RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-  SYSCFG_EXTILineConfig ((uint8_t) BUTTON_PORT_NUMBER, EXTI_PinSource0);
+  SYSCFG_EXTILineConfig ((uint8_t) BUTTON_PORT_NUMBER, BUTTON_PIN_NUMBER);
 
   EXTI->IMR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
   EXTI->RTSR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
   EXTI->FTSR |= BUTTON_PIN_MASK(BUTTON_PIN_NUMBER);
 
-  NVIC_EnableIRQ (EXTI0_1_IRQn);
+  NVIC_EnableIRQ (EXTI4_15_IRQn);
 
   // --------------------------------------------------------------------------
 
@@ -220,10 +220,10 @@ GPIO_EXTI_Callback (uint16_t mask)
 }
 
 extern "C" void
-EXTI15_10_IRQHandler (void);
+EXTI4_15_IRQHandler (void);
 
 void
-EXTI15_10_IRQHandler (void)
+EXTI4_15_IRQHandler (void)
 {
   trace_printf ("EXTI %04X\n", EXTI->PR);
   if ((EXTI->PR & BUTTON_PIN_MASK(BUTTON_PIN_NUMBER)) != 0)
