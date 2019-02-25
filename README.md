@@ -4,6 +4,16 @@ Eclipse projects used to test QEMU.
 
 # STM32F4-Discovery
 
+## f407-disc-blink-tutorial
+
+This is the same project as described in the 
+[blinky tutorial](https://gnu-mcu-eclipse.github.io/tutorials/blinky-arm/).
+
+It is a semihosted project, blinking the 4 LEDs.
+
+The VSC launcher refer to this project; for convenience,
+the Debug elf is included.
+
 ## f407-disco-birq
 
 A button test using interrupts.
